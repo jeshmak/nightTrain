@@ -8,7 +8,9 @@
 		<script src="lib/Coordinates.js"></script>
 		<script type="x-shader/x-vertex" id="vertexShader">
 		//skydome shader : shading pixles based on vertex world positions.
-		//Using two color inputs - topcolor, for the vertex  
+		//Using two color inputs - topColor and bottomColor and blending both using smoothstem/mix function
+		//Added offset float input to offset the center of the blending of two colors.
+		//Also added exponent input to adjust blend(smoothstep/mix) curve.
 			varying vec3 vWorldPosition;
 			void main() {
 				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
