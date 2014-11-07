@@ -6,8 +6,9 @@
 		<script src="lib/OrbitAndPanControls.js"></script>
 		<script src="lib/dat.gui.min.js"></script>
 		<script src="lib/Coordinates.js"></script>
-
 		<script type="x-shader/x-vertex" id="vertexShader">
+		//skydome shader : shading pixles based on vertex world positions.
+		//Using two color inputs - topcolor, for the vertex  
 			varying vec3 vWorldPosition;
 			void main() {
 				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
@@ -27,23 +28,17 @@
 			}
 		</script>
 		<script>
-			/*global THREE, window, document, $*/
-
+			//declaring global variables
 			var camera, scene, renderer;
 			var cameraControls, effectController;
 			var clock = new THREE.Clock();
-			var gridX = false;
-			var gridY = false;
-			var gridZ = false;
-			var axes = false;
-			var ground = false;
 			var ambientLight, light, headlight;
 			var toyTrain, ttEngine, ttCompt_01, ttCompt_02;
 			var spriteMaterial, sprite;
 			var smokeParticles = new THREE.Geometry;
 			var time = 0;
 			var ttEngine = new THREE.Object3D();
-
+			//declaring global materials
 			var material = new THREE.MeshPhongMaterial( { color: 0x393939, specular: 0x2e2e2e, shininess: 30 } );
 			var bluMat = new THREE.MeshPhongMaterial( { color: 0x3399ff, specular: 0x2e2e2e, shininess: 30 } );
 			var redMat = new THREE.MeshPhongMaterial( { color: 0xff0000, specular: 0x2e2e2e, shininess: 30 } );
@@ -51,121 +46,87 @@
 			var owhiteMat = new THREE.MeshPhongMaterial( { color: 0xffcccc, specular: 0x2e2e2e, shininess: 30 } );
 			var yellowMat = new THREE.MeshPhongMaterial( { color: 0xffff99, specular: 0x2e2e2e, shininess: 30 } );
 			var orngwMat = new THREE.MeshPhongMaterial( { color: 0xff9900, specular: 0x2e2e2e, shininess: 30 } );
-			//var ka = 0.4;
-			//material.ambient.setRGB( material.color.r * ka, material.color.g * ka, material.color.b * ka );
-
+			
 			function init() {
-				//var canvasWidth = 846;
-				//var canvasHeight = 494;
-				// For grading the window is fixed in size; here's general code:
-				var canvasWidth = window.innerWidth;
-				var canvasHeight = window.innerHeight;
+				var canvasWidth = 846;
+				var canvasHeight = 494;
+				//option for 'window size' canvas.
+				//var canvasWidth = window.innerWidth;
+				//var canvasHeight = window.innerHeight;
 				var canvasRatio = canvasWidth / canvasHeight;
-
 				// CAMERA
-
 				camera = new THREE.PerspectiveCamera( 45, canvasRatio, 1, 80000 );
 				camera.position.set( -300, 300, -1300 );
-				//camera.position.set( -100, 300, -500 );
-				//camera.rotation.y = -90*Math.PI*180;
 				camera.lookAt(0,0,0);
 				// LIGHTS
-
-				//ambientLight = new THREE.AmbientLight( 0x232323 );
-				ambientLight = new THREE.DirectionalLight( 0xFFFFFF, 0.5);
-				ambientLight.position.set( 800, 900, -300 );
-
-				light = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
-				light.position.set( 0, 1, 1 );
-
+				keyLight = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
+				keyLight.position.set( 0, 1, 1 );
 				headlight = new THREE.PointLight( 0xFFFFFF, 0.5 );
-				//headlight.position.set(1, 1, 1);
-    				//scene.add( headlight );
-
 				// RENDERER
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setSize( canvasWidth, canvasHeight );
-				//renderer.setClearColorHex( 0x1F42A3, 1.0 );
 				renderer.setClearColorHex( 0xAAAAAA, 1.0 );
-
+				// CONTAINER
 				var container = document.getElementById('container');
 				container.appendChild( renderer.domElement );
-				//document.body.appendChild(renderer.domElement);
-
+				// GAMMA
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
-
 				// CONTROLS
 				cameraControls = new THREE.OrbitAndPanControls( camera, renderer.domElement );
 				cameraControls.target.set(0, 0, 0);
 			}
 			
 			function addSmoke() {
-				//var smokeParticles = new THREE.Geometry;
-				for (var i = 0; i<=100; i++) {
-						//chi.position.y = 12+35+24;
-						//chi.position.x = 50;
+				/*creating 50 smoke particles, coming out of train engine.
+				each particle has leaves texture applied with transparency on. 
+				*/ 
+				for (var i = 0; i<=50; i++) {
     						var particle = new THREE.Vector3(Math.random() * 30 - 15, Math.random() * 200, Math.random() * 30 - 15);
     						smokeParticles.vertices.push(particle);
 					}
 				var smokeTexture = THREE.ImageUtils.loadTexture('media/maple.png');
-				//var smokeMaterial = new THREE.ParticleBasicMaterial({ map: smokeTexture, transparent: true, blending: THREE.AdditiveBlending, size: 50, color: 0x111111 });
 				var smokeMaterial = new THREE.ParticleBasicMaterial({ map: smokeTexture, transparent: true, size: 60, color: 0x31B404});
 				var smoke = new THREE.ParticleSystem(smokeParticles, smokeMaterial);
 				smoke.position.x = 50;
 				smoke.position.y = 71;
 				smoke.sortParticles = true;
-				//smoke.position.x = -150;
-				smoke.sortParticles = 1;
-				//scene.add(smoke);
 				ttEngine.add( smoke );
 			}
 			
 			function addStars() {
-			
+				/*creating random glittering star sprite particles in backgroung, within radius range of 2500.
+				also applying glowing particle texture to each sprite. 
+				*/ 
 				var particleTexture = THREE.ImageUtils.loadTexture( 'media/particle.png' );
-
 				particleGroup = new THREE.Object3D();
-				particleAttributes = { pOpacity: [], startPosition: [], randomness: [] };
-	
-				var totalParticles = 2000;
+				var totalParticles = 1000;
 				var radiusRange = 2500;
 				for( var i = 0; i < totalParticles; i++ ) 
 				{
 					spriteMaterial = new THREE.SpriteMaterial( { map: particleTexture, useScreenCoordinates: false, color: 0xffffff } );
 					var pSc = Math.random()*144;
 					sprite = new THREE.Sprite( spriteMaterial );
-					sprite.scale.set( pSc, pSc, 1.0 ); // imageWidth, imageHeight
+					sprite.scale.set( pSc, pSc, 1.0 );
 					sprite.position.set( Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5 );
-					// for a cube:
-					// sprite.position.multiplyScalar( radiusRange );
-					// for a solid sphere:
-					// sprite.position.setLength( radiusRange * Math.random() );
-					// for a spherical shell:
 					sprite.position.setLength( radiusRange * (Math.random() * 0.1 + 1.0) );
-		
-					// sprite.color.setRGB( Math.random(),  Math.random(),  Math.random() ); 
 					sprite.material.color.setHSL( Math.random(), 0.3, (Math.random())-0.5 ); 
-		
-					sprite.opacity = 0.0; // translucent particles
-					sprite.material.blending = THREE.AdditiveBlending; // "glowing" particles
-		
+					sprite.material.blending = THREE.AdditiveBlending; 
 					particleGroup.add( sprite );
-					// add variable qualities to arrays, if they need to be accessed later
-					//particleAttributes.pOpacity.push( sprite.opacity.clone() );
-					particleAttributes.startPosition.push( sprite.position.clone() );
-					particleAttributes.randomness.push( Math.random() );
 				}
 				scene.add( particleGroup );	
 			}
 			
 			function addSkyDome() {
+				/*
+				creating skydome by applying gredient fragment shader on sphere geometry.		
+				*/
 				var vertexShader = document.getElementById( 'vertexShader' ).textContent;
 				var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
 				var uniforms = {
 					topColor: 	 { type: "c", value: new THREE.Color( 0x070B19) },
 					bottomColor: { type: "c", value: new THREE.Color( 0x0B173B ) },
-					offset:		 { type: "f", value: 400 },
+					offset:		 { type: "f", value: 800.0 },
 					exponent:	 { type: "f", value: 0.6 }
 				}
 				var skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
@@ -175,87 +136,72 @@
 			}
 
 			function createTrainEngine(ttEngine) {
-
-				//HOOK
+				/*
+				creating main engine geometry
+				*/
+				//creating hook for train engine
 				var engHookCyl = new THREE.Mesh( new THREE.CylinderGeometry( 2, 2, 20, 16, 10 ), material );
 				engHookCyl.position.x = -(100+10);
-				//engHookCyl.position.y = -1;
 				engHookCyl.rotation.z = 90*Math.PI/180;
 				ttEngine.add( engHookCyl );
 				var engHookTor = new THREE.Mesh( new THREE.TorusGeometry( 6, 1.6, 16, 100 ), material );
 				engHookTor.position.x = -(100+14+6);
-				//engHookTor.position.y = -1;
 				engHookTor.rotation.x = 90*Math.PI/180;
 				ttEngine.add( engHookTor );
-
 				var cube = new THREE.Mesh( new THREE.CubeGeometry( 200,24,80 ), owhiteMat );
 				ttEngine.add( cube );
-				
 				var cube1 = new THREE.Mesh( new THREE.CubeGeometry( 100,80,80 ), greenMat );
-				//var cube1 = new THREE.Mesh( new THREE.CubeGeometry( 250,220,200 ) )
 				cube1.position.y = 12+40;
 				cube1.position.x = -50;
 				ttEngine.add( cube1 );
-				
+				//creating roof for train engine
 				var roof = new THREE.Mesh( new THREE.CylinderGeometry( 10, 80, 50, 4, 10  ), orngwMat );
-				//var roof = new THREE.Mesh( new THREE.CylinderGeometry( 0, 75, 225, 40, 10  ) )
 				roof.position.y = 12+80+25;
 				roof.position.x = -50;
 				roof.rotation.y = 45*Math.PI/180;
-				//cube1.position.x = -125;
 				ttEngine.add( roof );
-				
-				//creating cylinder
+				//creating front cylinder for train engine
 				var cyl = new THREE.Mesh( new THREE.CylinderGeometry( 35, 35, 100, 40, 10 ), redMat );
-				//var cyl = new THREE.Mesh( new THREE.CylinderGeometry( 90, 90, 380, 10, 10 ) );
 				cyl.rotation.z = 90*Math.PI/180;
 				cyl.position.y = 12+25;
 				cyl.position.x = 40;
 				ttEngine.add( cyl );
-				
-				//creating cylinder
+				//WHEELS
 				var frntRight = new THREE.Mesh( new THREE.CylinderGeometry( 24, 24, 8, 16, 10 ), bluMat );
 				frntRight.rotation.x = 90*Math.PI/180;
 				frntRight.position.z = 40+4;
 				frntRight.position.x = 50;
 				ttEngine.add( frntRight );
-				
-				//creating cylinder
 				var rareRight = new THREE.Mesh( new THREE.CylinderGeometry( 24, 24, 8, 16, 10 ), bluMat );
 				rareRight.rotation.x = 90*Math.PI/180;
 				rareRight.position.z = 40+4;
 				rareRight.position.x = -50;
 				ttEngine.add( rareRight );
-				
-				//creating cylinder
 				var frntLeft = new THREE.Mesh( new THREE.CylinderGeometry( 24, 24, 8, 16, 10 ), bluMat );
 				frntLeft.rotation.x = 90*Math.PI/180;
 				frntLeft.position.z = -(40+4);
 				frntLeft.position.x = 50;
 				ttEngine.add( frntLeft );
-				
-				//creating cylinder
 				var rareLeft = new THREE.Mesh( new THREE.CylinderGeometry( 24, 24, 8, 16, 10 ), bluMat );
 				rareLeft.rotation.x = 90*Math.PI/180;
 				rareLeft.position.z = -(40+4);
 				rareLeft.position.x = -50;
 				ttEngine.add( rareLeft );
-				
-				//creating cylinder
+				//creating smoke chimney
 				var chi = new THREE.Mesh( new THREE.CylinderGeometry( 20, 12, 24, 40, 10 ), yellowMat );
-				//chi.rotation.x = 90*Math.PI/180;
 				chi.position.y = 12+35+24;
 				chi.position.x = 50;
 				ttEngine.add( chi );
-					
 			}
 
 			function addCompartment( ttCompt_01_pos, ttCompt_02_pos ) {
+				/*
+				creating train compartment geometries.
+				*/
 				//BASE - First Compartment
 				var c1Base = new THREE.Mesh( new THREE.CubeGeometry( 200,24,80 ), owhiteMat );
 				ttCompt_01_pos.add( c1Base );
 				//HOOK
-				
 				var c1Hook = new THREE.Mesh( new THREE.CubeGeometry( 25,8,12 ), material );
 				c1Hook.position.x = 100+12;
 				c1Hook.position.y = -8;
@@ -264,7 +210,6 @@
 				c1HookCyl.position.x = 100+25-5;
 				c1HookCyl.position.y = 1;
 				ttCompt_01_pos.add( c1HookCyl );
-				
 				//WALLS
 				var c1WallR = new THREE.Mesh( new THREE.CubeGeometry( 200,50,10 ), orngwMat );
 				c1WallR .position.y = 12+25;
@@ -274,11 +219,11 @@
 				c1WallL .position.y = 12+25;
 				c1WallL .position.z = -(80/2-10/2);
 				ttCompt_01_pos.add( c1WallL  );
-				var c1WallF = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), orngwMat );
+				var c1WallF = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), redMat );
 				c1WallF .position.y = 12+25;
 				c1WallF .position.x = 200/2-10/2;
 				ttCompt_01_pos.add( c1WallF  );	
-				var c1WallR = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), orngwMat );
+				var c1WallR = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), redMat );
 				c1WallR .position.y = 12+25;
 				c1WallR .position.x = -(200/2-10/2);
 				ttCompt_01_pos.add( c1WallR  );
@@ -336,11 +281,11 @@
 				c2WallL .position.y = 12+25;
 				c2WallL .position.z = -(80/2-10/2);
 				ttCompt_02_pos.add( c2WallL  );
-				var c2WallF = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), redMat );
+				var c2WallF = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), orngwMat );
 				c2WallF .position.y = 12+25;
 				c2WallF .position.x = 200/2-10/2;
 				ttCompt_02_pos.add( c2WallF  );	
-				var c2WallR = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), redMat );
+				var c2WallR = new THREE.Mesh( new THREE.CubeGeometry( 10,50,60 ), orngwMat );
 				c2WallR .position.y = 12+25;
 				c2WallR .position.x = -(200/2-10/2);
 				ttCompt_02_pos.add( c2WallR  );
@@ -365,17 +310,19 @@
 				c2WheelRL.position.z = -(40+4);
 				c2WheelRL.position.x = -50;
 				ttCompt_02_pos.add( c2WheelRL );
-				
 			}
 
 			function createTrack(rad) {
+				/*
+				creating train track geometry
+				*/
 				var trcInner = new THREE.Mesh( new THREE.TorusGeometry( rad, (rad*0.5/100), 6, 100 ), material );
 				trcInner.rotation.x = 90*Math.PI/180;
 				scene.add( trcInner );
 				var trcOuter = new THREE.Mesh( new THREE.TorusGeometry( rad+85, (rad*0.5/100), 6, 100 ), material );
 				trcOuter.rotation.x = 90*Math.PI/180;
 				scene.add( trcOuter );
-				//create track connector
+				//create track connectors
 				
 				for ( i=0; i<=359; i=i+4) {
 					var slab = new THREE.Mesh( new THREE.CubeGeometry( 100,2,20 ), material );
@@ -386,53 +333,49 @@
 					slabRot.rotation.y = i * Math.PI/180;
 					scene.add(slabRot);
 				}
-				
-				//var cube = new THREE.Mesh( new THREE.CubeGeometry( 500,60,200 ) )
-				
 			}
 			
 			function createTrain(toyTrain, ttCompt_01, ttCompt_02) {
+				/*
+				setting up final position of the each train geometry on track geometry.
+				*/
 				var radius = 650;
-				//var ttEngine = new THREE.Object3D();
 				createTrainEngine(ttEngine);
+				//creating track geo with user define radius.
 				createTrack(radius);
-				
+				//positioning engine geo.
 				ttEngine.position.z = radius+40;
 				ttEngine.position.y = 24;
-
 				// add field for animated part, for simplicity
 				toyTrain.animated = ttEngine;
-				
 				toyTrain.add(ttEngine);
-				
+				//positioning compartments geo.
 				var ttCompt_01_pos = new THREE.Object3D();
 				var ttCompt_02_pos = new THREE.Object3D();
-				
 				addCompartment( ttCompt_01_pos, ttCompt_02_pos );
-						
 				ttCompt_01_pos.position.z = radius+40;
-				//ttCompt_01_pos.position.x = -240;
 				ttCompt_02_pos.position.z = radius+40;
 				ttCompt_01_pos.position.y = 24;
 				ttCompt_02_pos.position.y = 24;
 				// add field for animated part, for simplicity
 				ttCompt_01.animated = ttCompt_01_pos;
 				ttCompt_02.animated = ttCompt_02_pos;									
-				
 				ttCompt_01.add(ttCompt_01_pos);
 				ttCompt_02.add(ttCompt_02_pos);
-				
 			}
 
 			function fillScene() {
+				/*
+				filling the scene by adding geometries(train), particles(smoke) and sprites(star).
+				*/
+				//creating scene
 				scene = new THREE.Scene();
+				//add fog
 				scene.fog = new THREE.Fog(  0x0B173B, 500, 2800 );
-
-				// LIGHTS
-				//scene.add( ambientLight );
-				scene.add( light );
+				//add lights
+				scene.add( keyLight );
 				scene.add( headlight );
-				// Train
+				// add train
 				toyTrain = new THREE.Object3D();
 				ttCompt_01 = new THREE.Object3D();
 				ttCompt_01.rotation.y = -20 * Math.PI/180;
@@ -442,13 +385,12 @@
 				scene.add( toyTrain );
 				scene.add( ttCompt_01 );
 				scene.add( ttCompt_02 );
-
-				//Sky
+				//add sky
 				addSkyDome();
-				// Stars
+				//add stars
 				addStars();
-				addSmoke();
-				
+				//add smoke
+				addSmoke();	
 			}
 
 			function addToDOM() {
@@ -461,102 +403,56 @@
 			}
 
 			function animate() {
-
 				window.requestAnimationFrame( animate );
 				render();
-
 			}
 
 			function render() {
+				/*
+				updating each frame.
+				*/
 				var delta = clock.getDelta();
 				cameraControls.update(delta);
-				
+				//train circular rotation expression.
 				toyTrain.rotation.y += 0.5*Math.PI/180;
-				toyTrain.rotation.z = (Math.random()*1.1)*Math.PI/180;
-
 				ttCompt_01.rotation.y += (0.5*Math.PI/180);
-				ttCompt_01.rotation.z = (Math.random()*1.1)*Math.PI/180;
-
 				ttCompt_02.rotation.y += (0.5*Math.PI/180);
+
+				//train z vibration expression.
+				toyTrain.rotation.z = (Math.random()*1.1)*Math.PI/180;
+				ttCompt_01.rotation.z = (Math.random()*1.1)*Math.PI/180;				
 				ttCompt_02.rotation.z = (Math.random()*1.1)*Math.PI/180;
 				
+				//Star Sprite Particles : apply expression to scale x and y for glittering fill.
 				for ( var c = 0; c < particleGroup.children.length; c ++ ) {
 
 					var sprite = particleGroup.children[ c ];
-					var scale = Math.sin( delta * 1000 ) * (Math.random()*10) + 40.0;
+					var scale = Math.sin( delta * 1000 ) * (Math.random()*15) + 40.0;
 					sprite.scale.set( scale, scale, 1.0);
 				}
 				
+				//Smoke Particles : define y height limit, random x movement, reborn particle randomly within 
+				//define radius and define travel speed.
 				var particleCount = smokeParticles.vertices.length;
 				while (particleCount--) {
 					var particle = smokeParticles.vertices[particleCount];
     					particle.y += delta * 150;
-					particle.x -= delta * 40;
-					//particle.x -= Math.smoothstep(1.0,0.0,40.0);
-     
-    					if (particle.y >= 230) {
+					particle.x -= delta * Math.random() *150;
+    					if (particle.y >= 120) {
         					particle.y = Math.random() * 15;
         					particle.x = Math.random() * 30 - 15;
         					particle.z = Math.random() * 30 - 15;
     					}
 				}
 				smokeParticles.__dirtyVertices = true;
-
+				//light from camera
 				headlight.position.copy(camera.position);
-				
-				if ( effectController.newGridX !== gridX || effectController.newGridY !== gridY ||effectController.newGridZ !== gridZ || effectController.newGround !== ground || effectController.newAxes !== axes)
-				{
-					gridX = effectController.newGridX;
-					gridY = effectController.newGridY;
-					gridZ = effectController.newGridZ;
-					ground = effectController.newGround;
-					axes = effectController.newAxes;
-
-					fillScene();
-					drawHelpers();
-				}
 				renderer.render( scene, camera );
 			}
 
-			function drawHelpers() {
-				if (ground) {
-					Coordinates.drawGround({size:10000});
-				}
-				if (gridX) {
-					Coordinates.drawGrid({size:10000,scale:0.01});
-				}
-				if (gridY) {
-					Coordinates.drawGrid({size:10000,scale:0.01, orientation:"y"});
-				}
-				if (gridZ) {
-					Coordinates.drawGrid({size:10000,scale:0.01, orientation:"z"});
-				}
-				if (axes) {
-					Coordinates.drawAllAxes({axisLength:200,axisRadius:1,axisTess:50});
-				}
-			}
-
-			function setupGui() {
-				effectController = {
-
-					newGridX: gridX,
-					newGridY: gridY,
-					newGridZ: gridZ,
-					newGround: ground,
-					newAxes: axes
-				};
-				var gui = new dat.GUI();
-				gui.add( effectController, "newGridX").name("Show XZ grid");
-				gui.add( effectController, "newGridY" ).name("Show YZ grid");
-				gui.add( effectController, "newGridZ" ).name("Show XY grid");
-				gui.add( effectController, "newGround" ).name("Show ground");
-				gui.add( effectController, "newAxes" ).name("Show axes");
-			}
 			try {
 				init();
 				fillScene();
-				setupGui();
-				drawHelpers();
 				addToDOM();
 				animate();
 			} catch(e) {
