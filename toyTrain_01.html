@@ -8,7 +8,9 @@
 		<script src="lib/Coordinates.js"></script>
 		<script type="x-shader/x-vertex" id="vertexShader">
 		//skydome shader : shading pixles based on vertex world positions.
-		//Using two color inputs - topcolor, for the vertex  
+		//Using two color inputs - topColor and bottomColor and blending both using smoothstem/mix function
+		//Added offset as a float input to offset the center of the blending of two colors.
+		//Also added exponent as a input to adjust blend(smoothstep/mix) curve. 
 			varying vec3 vWorldPosition;
 			void main() {
 				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
@@ -33,7 +35,7 @@
 			var cameraControls, effectController;
 			var clock = new THREE.Clock();
 			var ambientLight, light, headlight;
-			var toyTrain, ttEngine, ttCompt_01, ttCompt_02;
+			var toyTrain, ttCompt_01, ttCompt_02;
 			var spriteMaterial, sprite;
 			var smokeParticles = new THREE.Geometry;
 			var time = 0;
@@ -341,7 +343,7 @@
 				*/
 				var radius = 650;
 				createTrainEngine(ttEngine);
-				//creating track geo with user define radius.
+				//creating track geo with define radius.
 				createTrack(radius);
 				//positioning engine geo.
 				ttEngine.position.z = radius+40;
