@@ -35,7 +35,7 @@
 			var cameraControls, effectController;
 			var clock = new THREE.Clock();
 			var ambientLight, light, headlight;
-			var toyTrain, ttEngine, ttCompt_01, ttCompt_02;
+			var toyTrain, ttCompt_01, ttCompt_02;
 			var spriteMaterial, sprite;
 			var smokeParticles = new THREE.Geometry;
 			var time = 0;
@@ -50,11 +50,11 @@
 			var orngwMat = new THREE.MeshPhongMaterial( { color: 0xff9900, specular: 0x2e2e2e, shininess: 30 } );
 			
 			function init() {
-				var canvasWidth = 846;
-				var canvasHeight = 494;
+				//var canvasWidth = 846;
+				//var canvasHeight = 494;
 				//option for 'window size' canvas.
-				//var canvasWidth = window.innerWidth;
-				//var canvasHeight = window.innerHeight;
+				var canvasWidth = window.innerWidth;
+				var canvasHeight = window.innerHeight;
 				var canvasRatio = canvasWidth / canvasHeight;
 				// CAMERA
 				camera = new THREE.PerspectiveCamera( 45, canvasRatio, 1, 80000 );
