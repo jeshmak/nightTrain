@@ -24,6 +24,7 @@
 		 <script src="lib/StereoEffect.js"></script>
  		<script src="lib/DeviceOrientationControls.js"></script>
 		<script src="lib/OrbitAndPanControls.js"></script>
+		<script src="lib/OrbitControls.js"></script>
 		<script src="lib/dat.gui.min.js"></script>
 		<script src="lib/Coordinates.js"></script>
 		<script type="x-shader/x-vertex" id="vertexShader">
@@ -52,7 +53,7 @@
 		<script>
 			//declaring global variables
 			var camera, scene, renderer;
-			var cameraControls, effectController;
+			var controls, effectController;
 			var clock = new THREE.Clock();
 			var ambientLight, light, headlight;
 			var toyTrain, ttCompt_01, ttCompt_02;
@@ -82,19 +83,23 @@
 				var canvasRatio = canvasWidth / canvasHeight;
 				// CAMERA
 				//camera = new THREE.PerspectiveCamera( 90, canvasRatio, 1, 80000 );
-				camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 70000);
+				camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 70000);
 				//camera.position.set( -300, 300, -1300 );
-				camera.position.set( 0, 500, 1500 );	
-				//camera.lookAt(0,0,0);
+				camera.position.set( 0, 300, 1500 );	
+				//scene.add(camera);
+				camera.lookAt(0,0,0);
+
 				// LIGHTS
 				keyLight = new THREE.DirectionalLight( 0xFFFFFF, 1.0 );
 				keyLight.position.set( 0, 1, 1 );
 				headlight = new THREE.PointLight( 0xFFFFFF, 0.5 );
+
 				// RENDERER
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				element = renderer.domElement;
 				//renderer.setSize( canvasWidth, canvasHeight );
 				renderer.setClearColorHex( 0xAAAAAA, 1.0 );
+
 				// CONTAINER
 				var container = document.getElementById('container');
 				//container = document.getElementById('webglviewer');	
@@ -105,9 +110,13 @@
 				// GAMMA
 				renderer.gammaInput = true;
 				renderer.gammaOutput = true;
+
 				// CONTROLS
-				cameraControls = new THREE.OrbitAndPanControls( camera, element );
-				cameraControls.target.set(0+0.15, 0, 0);
+				controls = new THREE.OrbitAndPanControls( camera, element );
+				//controls_test = new THREE.OrbitControls( camera, element );
+				//controls.target.set(0+0.15, 0, 0);
+				//controls.noPan = true;
+        			//controls.noZoom = true;
 
 				function setOrientationControls(e) {
           				if (!e.alpha) {
@@ -468,6 +477,7 @@
 				scene.add( toyTrain );
 				scene.add( ttCompt_01 );
 				scene.add( ttCompt_02 );
+				scene.add(camera);
 				//add sky
 				addSkyDome();
 				//add stars
@@ -488,7 +498,7 @@
 			function animate() {
 				window.requestAnimationFrame( animate );
 				render();
-				update();
+				update(clock.getDelta());
 			}
 			
 			function setupGui() {
@@ -514,7 +524,7 @@
 				updating each frame.
 				*/
 				var delta = clock.getDelta();
-				cameraControls.update(delta);
+				controls.update(delta);
 				
 				/*
 				TO FIND THE WHEEL SPEED				
