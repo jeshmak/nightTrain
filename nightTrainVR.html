@@ -98,7 +98,7 @@
         effect = new THREE.StereoEffect(renderer);
 
         // Our initial control fallback with mouse/touch events in case DeviceOrientation is not enabled
-        controls = new THREE.OrbitAndPanControls(camera, element);
+        controls = new THREE.OrbitControls(camera, element);
 	
         controls.target.set(
           camera.position.x+0.15,
